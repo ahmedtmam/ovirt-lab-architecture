@@ -72,18 +72,12 @@
       ansible.builtin.command: "nslookup {{ item.name }}.{{ dns_zone }} 127.0.0.1"
       loop: "{{ dns_records }}"
       changed_when: false
-      register: fwd_check
-
+ 
     - name: Verify reverse DNS — all lab hosts
       ansible.builtin.command: "nslookup {{ item.ip }} 127.0.0.1"
       loop: "{{ dns_records }}"
       changed_when: false
-
-    - name: Report DNS verification results
-      ansible.builtin.debug:
-        msg: "DNS OK: {{ item.item.name }}.{{ dns_zone }} -> {{ item.item.ip }}"
-      loop: "{{ fwd_check.results }}"
-
+ 
   handlers:
     - name: Restart named
       ansible.builtin.systemd:
