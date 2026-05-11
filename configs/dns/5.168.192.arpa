@@ -20,4 +20,4 @@ $TTL 86400
 142 IN PTR  ovirt1.lab.local.
 143 IN PTR  ovirt2.lab.local.
 144 IN PTR  ovirt3.lab.local.
-145 IN PTR  engine.lab.local.
+145 IN PTR  engine.lab.local. 

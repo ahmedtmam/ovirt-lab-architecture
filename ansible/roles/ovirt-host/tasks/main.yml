@@ -23,5 +23,5 @@
 - name: Ensure firewalld active
   ansible.builtin.systemd:
     name: firewalld
-    state: started
-    enabled: true
+    state: started 
+    enabled: true 

@@ -14,7 +14,7 @@
   register: engine_up
   until: engine_up.status == 200
   retries: 30
-  delay: 20
+  delay: 20 
 
 - name: Get Engine API auth token
   ansible.builtin.uri:

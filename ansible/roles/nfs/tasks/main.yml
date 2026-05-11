@@ -10,7 +10,7 @@
     path: "{{ item }}"
     state: directory
     owner: 36
-    group: 36
+    group: 36 
     mode: "0755"
   loop:
     - /exports/ovirt-data

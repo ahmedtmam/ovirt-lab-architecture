@@ -20,7 +20,7 @@
 
 - name: Enable named
   ansible.builtin.systemd:
-    name: named
+    name: named 
     state: started
     enabled: true
 
