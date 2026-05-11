@@ -1,0 +1,32 @@
+---
+# ansible/roles/dns/tasks/main.yml
+- name: Install BIND
+  ansible.builtin.dnf:
+    name: [bind, bind-utils]
+    state: present
+
+- name: Deploy configs
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: named
+    mode: "0640"
+  loop:
+    - { src: named.conf,      dest: /etc/named.conf }
+    - { src: lab.local.zone,  dest: /var/named/lab.local.zone }
+    - { src: 5.168.192.arpa,  dest: /var/named/5.168.192.arpa }
+  notify: restart named
+
+- name: Enable named
+  ansible.builtin.systemd:
+    name: named
+    state: started
+    enabled: true
+
+- name: Firewall — DNS
+  ansible.posix.firewalld:
+    service: dns
+    permanent: true
+    state: enabled
+    immediate: true

@@ -1,0 +1,28 @@
+; ============================================================
+; /var/named/lab.local.zone — Forward Zone
+; DNS Server: dns.lab.local (192.168.5.140)
+; Domain: lab.local
+; ============================================================
+
+$TTL 86400
+@   IN SOA dns.lab.local. admin.lab.local. (
+              2024010101 ; Serial   — increment after every change
+              3600       ; Refresh  — secondary checks every 1h
+              1800       ; Retry    — retry after 30m on failure
+              604800     ; Expire   — zone expires after 1 week
+              86400 )    ; Minimum TTL
+
+; Name servers
+    IN NS   dns.lab.local.
+
+; ── Infrastructure ──────────────────────────────────────────
+dns     IN A    192.168.5.140   ; DNS Server
+nfs     IN A    192.168.5.141   ; NFS Shared Storage
+
+; ── oVirt Hosts ─────────────────────────────────────────────
+ovirt1  IN A    192.168.5.142   ; Node 1 — Engine Host (primary)
+ovirt2  IN A    192.168.5.143   ; Node 2 — Compute Host
+ovirt3  IN A    192.168.5.144   ; Node 3 — Compute Host
+
+; ── oVirt Engine VM ─────────────────────────────────────────
+engine  IN A    192.168.5.145   ; Self-Hosted Engine VM

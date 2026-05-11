@@ -1,0 +1,40 @@
+---
+# ansible/roles/nfs/tasks/main.yml
+- name: Install nfs-utils
+  ansible.builtin.dnf:
+    name: [nfs-utils, rpcbind]
+    state: present
+
+- name: Create export directories with vdsm:kvm ownership (UID/GID 36)
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: 36
+    group: 36
+    mode: "0755"
+  loop:
+    - /exports/ovirt-data
+    - /exports/ovirt-iso
+    - /exports/ovirt-hosted-engine
+
+- name: Deploy /etc/exports
+  ansible.builtin.copy:
+    src: exports
+    dest: /etc/exports
+    mode: "0644"
+  notify: reload exports
+
+- name: Enable NFS services
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    state: started
+    enabled: true
+  loop: [rpcbind, nfs-server]
+
+- name: Firewall — NFS
+  ansible.posix.firewalld:
+    service: "{{ item }}"
+    permanent: true
+    state: enabled
+    immediate: true
+  loop: [nfs, rpc-bind, mountd]

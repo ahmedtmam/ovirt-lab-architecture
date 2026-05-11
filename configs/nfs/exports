@@ -1,0 +1,21 @@
+# ============================================================
+# /etc/exports — NFS Server: nfs.lab.local (192.168.5.141)
+# oVirt Lab Shared Storage Exports
+#
+# IMPORTANT: Directories must be owned by UID/GID 36 (vdsm:kvm)
+#   chown -R 36:36 /exports/ovirt-data
+#   chown -R 36:36 /exports/ovirt-iso
+#   chown -R 36:36 /exports/ovirt-hosted-engine
+#   chmod 0755 /exports/ovirt-*
+#
+# Apply changes: exportfs -rav
+# ============================================================
+
+# VM Data Storage Domain — VM disk images
+/exports/ovirt-data           192.168.5.0/24(rw,sync,no_root_squash,no_subtree_check)
+
+# ISO Storage Domain — installation media
+/exports/ovirt-iso            192.168.5.0/24(rw,sync,no_root_squash,no_subtree_check)
+
+# Self-Hosted Engine Storage — Engine VM disk
+/exports/ovirt-hosted-engine  192.168.5.0/24(rw,sync,no_root_squash,no_subtree_check)

@@ -1,0 +1,140 @@
+---
+# ============================================================
+# ansible/playbooks/03_ovirt_hosts.yml
+# Prepare all three oVirt nodes (ovirt1, ovirt2, ovirt3)
+# Sets hostname, DNS, repos, installs ovirt-host package
+# Do NOT start/configure VDSM manually — Engine manages it
+# ============================================================
+- name: Prepare oVirt Compute Hosts
+  hosts: ovirt_hosts
+  become: true
+  serial: 1          # Run one host at a time for safety
+
+  vars:
+    dns_server: "192.168.5.140"
+    ovirt_repo: "https://resources.ovirt.org/pub/yum-repo/ovirt-release45.rpm"
+    nfs_server: "nfs.lab.local"
+    ntp_servers:
+      - "0.pool.ntp.org"
+      - "1.pool.ntp.org"
+
+  tasks:
+    # ── Hostname ─────────────────────────────────────────────
+    - name: Set FQDN hostname
+      ansible.builtin.hostname:
+        name: "{{ inventory_hostname }}"
+
+    # ── DNS ──────────────────────────────────────────────────
+    - name: Configure DNS resolver (point to dns.lab.local)
+      ansible.builtin.copy:
+        dest: /etc/resolv.conf
+        content: |
+          # oVirt Lab DNS — managed by Ansible
+          search lab.local
+          nameserver {{ dns_server }}
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Verify FQDN resolves forward
+      ansible.builtin.command: "nslookup {{ inventory_hostname }}"
+      changed_when: false
+      register: fwd_dns
+
+    - name: Verify FQDN resolves reverse
+      ansible.builtin.command: "nslookup {{ ansible_host }}"
+      changed_when: false
+      register: rev_dns
+
+    - name: Assert DNS is working
+      ansible.builtin.assert:
+        that:
+          - fwd_dns.rc == 0
+          - rev_dns.rc == 0
+        fail_msg: "DNS resolution failed for {{ inventory_hostname }} — fix DNS before proceeding"
+
+    # ── Time sync ────────────────────────────────────────────
+    - name: Install chrony
+      ansible.builtin.dnf:
+        name: chrony
+        state: present
+
+    - name: Enable and start chronyd
+      ansible.builtin.systemd:
+        name: chronyd
+        state: started
+        enabled: true
+
+    # ── Verify virtualization support ────────────────────────
+    - name: Check CPU virtualization extensions
+      ansible.builtin.shell: "grep -cE 'vmx|svm' /proc/cpuinfo"
+      changed_when: false
+      register: virt_check
+      failed_when: virt_check.stdout | int == 0
+
+    - name: Report CPU virtualization support
+      ansible.builtin.debug:
+        msg: "CPU virtualization OK — {{ virt_check.stdout }} cores with VT-x/AMD-V on {{ inventory_hostname }}"
+
+    # ── oVirt repository ─────────────────────────────────────
+    - name: Install oVirt 4.5 release RPM
+      ansible.builtin.dnf:
+        name: "{{ ovirt_repo }}"
+        state: present
+        disable_gpg_check: true
+
+    - name: Enable required DNF modules
+      ansible.builtin.command: "dnf module enable -y {{ item }}"
+      loop:
+        - javapackages-tools
+        - pki-deps
+      changed_when: true
+
+    - name: Run dnf distro-sync
+      ansible.builtin.dnf:
+        update_cache: true
+        state: latest
+        name: "*"
+
+    # ── Install oVirt host packages ──────────────────────────
+    - name: Install ovirt-host meta-package
+      ansible.builtin.dnf:
+        name:
+          - ovirt-host
+          - cockpit-ovirt-dashboard
+        state: present
+
+    # ── Firewall ─────────────────────────────────────────────
+    - name: Ensure firewalld is running
+      ansible.builtin.systemd:
+        name: firewalld
+        state: started
+        enabled: true
+
+    # ── Verify NFS is reachable ──────────────────────────────
+    - name: Install nfs-utils for NFS verification
+      ansible.builtin.dnf:
+        name: nfs-utils
+        state: present
+
+    - name: Verify NFS exports are visible from this host
+      ansible.builtin.command: "showmount -e {{ nfs_server }}"
+      changed_when: false
+      register: nfs_check
+
+    - name: Show NFS exports
+      ansible.builtin.debug:
+        var: nfs_check.stdout_lines
+
+    # ── Final summary ────────────────────────────────────────
+    - name: Host preparation summary
+      ansible.builtin.debug:
+        msg:
+          - "Host: {{ inventory_hostname }} ({{ ansible_host }})"
+          - "Hostname FQDN: OK"
+          - "DNS forward/reverse: OK"
+          - "CPU virtualization: OK"
+          - "oVirt repo: installed"
+          - "ovirt-host package: installed"
+          - "NFS reachable: OK"
+          - "Status: READY for hosted-engine --deploy (ovirt1 only)"

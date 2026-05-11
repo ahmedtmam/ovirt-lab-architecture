@@ -1,0 +1,37 @@
+---
+# ansible/roles/ovirt-engine/tasks/main.yml
+# Run AFTER hosted-engine --deploy completes successfully
+# Uses ovirt.ovirt Ansible collection for post-config
+#
+# Prerequisites:
+#   ansible-galaxy collection install ovirt.ovirt
+
+- name: Wait for Engine to be available
+  ansible.builtin.uri:
+    url: "https://engine.lab.local/ovirt-engine/api"
+    validate_certs: false
+    status_code: 200
+  register: engine_up
+  until: engine_up.status == 200
+  retries: 30
+  delay: 20
+
+- name: Get Engine API auth token
+  ansible.builtin.uri:
+    url: "https://engine.lab.local/ovirt-engine/sso/oauth/token"
+    method: POST
+    validate_certs: false
+    body_format: form-urlencoded
+    body:
+      grant_type: password
+      scope: "ovirt-app-api"
+      username: "admin@internal"
+      password: "{{ ovirt_engine_password }}"
+    headers:
+      Accept: application/json
+  register: auth_token
+  no_log: true
+
+- name: Report engine is reachable
+  ansible.builtin.debug:
+    msg: "oVirt Engine is UP at https://engine.lab.local/ovirt-engine"

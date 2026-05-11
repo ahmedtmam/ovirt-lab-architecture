@@ -1,0 +1,16 @@
+# ============================================================
+# /etc/hosts — Static fallback for all lab nodes
+# Copy to every host as a safety net in case DNS is down
+# Primary resolution must still come from dns.lab.local
+# ============================================================
+
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+# ── oVirt Lab — 192.168.5.0/24 ──────────────────────────────
+192.168.5.140   dns.lab.local       dns
+192.168.5.141   nfs.lab.local       nfs
+192.168.5.142   ovirt1.lab.local    ovirt1
+192.168.5.143   ovirt2.lab.local    ovirt2
+192.168.5.144   ovirt3.lab.local    ovirt3
+192.168.5.145   engine.lab.local    engine

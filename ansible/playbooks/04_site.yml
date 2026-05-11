@@ -1,0 +1,49 @@
+---
+# ============================================================
+# ansible/playbooks/04_site.yml
+# Full site playbook — runs all roles in correct dependency order
+#
+# Usage:
+#   ansible-playbook -i inventory/hosts.ini playbooks/04_site.yml
+#
+# Step 5 (hosted-engine deploy) is MANUAL — see docs/
+# ============================================================
+
+- name: "STEP 1 — Configure DNS Server"
+  ansible.builtin.import_playbook: 01_dns.yml
+
+- name: "STEP 2 — Configure NFS Storage Server"
+  ansible.builtin.import_playbook: 02_nfs.yml
+
+- name: "STEP 3 — Prepare oVirt Compute Hosts"
+  ansible.builtin.import_playbook: 03_ovirt_hosts.yml
+
+- name: "STEP 4 — Final pre-flight check"
+  hosts: ovirt_hosts
+  become: true
+  gather_facts: false
+
+  tasks:
+    - name: Verify all hosts can resolve engine.lab.local
+      ansible.builtin.command: nslookup engine.lab.local
+      changed_when: false
+      register: engine_dns
+
+    - name: Verify all hosts can reach NFS
+      ansible.builtin.command: showmount -e nfs.lab.local
+      changed_when: false
+      register: nfs_final
+
+    - name: Pre-flight PASSED
+      ansible.builtin.debug:
+        msg:
+          - "================================================"
+          - "Pre-flight checks PASSED on {{ inventory_hostname }}"
+          - "================================================"
+          - "NEXT STEP (manual on ovirt1):"
+          - "  ssh root@ovirt1.lab.local"
+          - "  hosted-engine --deploy"
+          - ""
+          - "See docs/ovirt_lab_architecture_v2.docx Section 6"
+          - "for full wizard answer reference."
+          - "================================================"

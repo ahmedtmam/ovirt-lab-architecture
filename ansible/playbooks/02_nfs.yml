@@ -1,0 +1,103 @@
+---
+# ============================================================
+# ansible/playbooks/02_nfs.yml
+# Configure NFS server on nfs.lab.local
+# Requires DNS to be working before running
+# ============================================================
+- name: Configure NFS Storage Server
+  hosts: nfs
+  become: true
+
+  vars:
+    nfs_exports:
+      - path: /exports/ovirt-data
+        comment: "VM Data Storage Domain"
+      - path: /exports/ovirt-iso
+        comment: "ISO Storage Domain"
+      - path: /exports/ovirt-hosted-engine
+        comment: "Self-Hosted Engine Storage"
+    # UID/GID 36 = vdsm:kvm — required by oVirt
+    ovirt_uid: 36
+    ovirt_gid: 36
+    nfs_client_network: "192.168.5.0/24"
+
+  tasks:
+    - name: Install NFS server packages
+      ansible.builtin.dnf:
+        name:
+          - nfs-utils
+          - rpcbind
+        state: present
+
+    - name: Create NFS export directories
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: directory
+        owner: "{{ ovirt_uid }}"
+        group: "{{ ovirt_gid }}"
+        mode: "0755"
+      loop: "{{ nfs_exports }}"
+
+    - name: Deploy /etc/exports
+      ansible.builtin.copy:
+        src: ../../configs/nfs/exports
+        dest: /etc/exports
+        owner: root
+        group: root
+        mode: "0644"
+      notify:
+        - Reload exports
+        - Restart nfs-server
+
+    - name: Enable and start NFS services
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: true
+      loop:
+        - rpcbind
+        - nfs-server
+
+    - name: Open NFS firewall services
+      ansible.posix.firewalld:
+        service: "{{ item }}"
+        permanent: true
+        state: enabled
+        immediate: true
+      loop:
+        - nfs
+        - rpc-bind
+        - mountd
+
+    - name: Verify exports are visible
+      ansible.builtin.command: showmount -e localhost
+      register: exports_check
+      changed_when: false
+
+    - name: Show active exports
+      ansible.builtin.debug:
+        var: exports_check.stdout_lines
+
+    - name: Verify UID/GID ownership on all exports
+      ansible.builtin.stat:
+        path: "{{ item.path }}"
+      loop: "{{ nfs_exports }}"
+      register: stat_results
+
+    - name: Assert correct ownership (UID/GID 36)
+      ansible.builtin.assert:
+        that:
+          - item.stat.uid == ovirt_uid
+          - item.stat.gid == ovirt_gid
+        fail_msg: "{{ item.item.path }} has wrong ownership — must be UID/GID 36 (vdsm:kvm)"
+        success_msg: "{{ item.item.path }} ownership OK (UID/GID 36)"
+      loop: "{{ stat_results.results }}"
+
+  handlers:
+    - name: Reload exports
+      ansible.builtin.command: exportfs -rav
+
+    - name: Restart nfs-server
+      ansible.builtin.systemd:
+        name: nfs-server
+        state: restarted

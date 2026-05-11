@@ -1,0 +1,91 @@
+---
+# ============================================================
+# ansible/playbooks/01_dns.yml
+# Configure BIND9 DNS on dns.lab.local
+# Run FIRST — all other components depend on DNS
+# ============================================================
+- name: Configure DNS Server
+  hosts: dns
+  become: true
+
+  vars:
+    dns_listen_ip: "192.168.5.140"
+    dns_zone: "lab.local"
+    dns_reverse_zone: "5.168.192.in-addr.arpa"
+    dns_records:
+      - { name: "dns",    ip: "192.168.5.140", ptr: "140" }
+      - { name: "nfs",    ip: "192.168.5.141", ptr: "141" }
+      - { name: "ovirt1", ip: "192.168.5.142", ptr: "142" }
+      - { name: "ovirt2", ip: "192.168.5.143", ptr: "143" }
+      - { name: "ovirt3", ip: "192.168.5.144", ptr: "144" }
+      - { name: "engine", ip: "192.168.5.145", ptr: "145" }
+
+  tasks:
+    - name: Install BIND packages
+      ansible.builtin.dnf:
+        name:
+          - bind
+          - bind-utils
+        state: present
+
+    - name: Deploy named.conf
+      ansible.builtin.copy:
+        src: ../../configs/dns/named.conf
+        dest: /etc/named.conf
+        owner: root
+        group: named
+        mode: "0640"
+      notify: Restart named
+
+    - name: Deploy forward zone file
+      ansible.builtin.copy:
+        src: ../../configs/dns/lab.local.zone
+        dest: /var/named/lab.local.zone
+        owner: root
+        group: named
+        mode: "0640"
+      notify: Restart named
+
+    - name: Deploy reverse zone file
+      ansible.builtin.copy:
+        src: ../../configs/dns/5.168.192.arpa
+        dest: /var/named/5.168.192.arpa
+        owner: root
+        group: named
+        mode: "0640"
+      notify: Restart named
+
+    - name: Enable and start named
+      ansible.builtin.systemd:
+        name: named
+        state: started
+        enabled: true
+
+    - name: Open DNS port in firewalld
+      ansible.posix.firewalld:
+        service: dns
+        permanent: true
+        state: enabled
+        immediate: true
+
+    - name: Verify forward DNS — all lab hosts
+      ansible.builtin.command: "nslookup {{ item.name }}.{{ dns_zone }} 127.0.0.1"
+      loop: "{{ dns_records }}"
+      changed_when: false
+      register: fwd_check
+
+    - name: Verify reverse DNS — all lab hosts
+      ansible.builtin.command: "nslookup {{ item.ip }} 127.0.0.1"
+      loop: "{{ dns_records }}"
+      changed_when: false
+
+    - name: Report DNS verification results
+      ansible.builtin.debug:
+        msg: "DNS OK: {{ item.item.name }}.{{ dns_zone }} -> {{ item.item.ip }}"
+      loop: "{{ fwd_check.results }}"
+
+  handlers:
+    - name: Restart named
+      ansible.builtin.systemd:
+        name: named
+        state: restarted
