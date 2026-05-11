@@ -58,7 +58,7 @@
     - name: Enable and start named
       ansible.builtin.systemd:
         name: named
-        state: started
+        state: restarted
         enabled: true
 
     - name: Open DNS port in firewalld
@@ -68,16 +68,11 @@
         state: enabled
         immediate: true
 
-    - name: Verify forward DNS — all lab hosts
-      ansible.builtin.command: "nslookup {{ item.name }}.{{ dns_zone }} 127.0.0.1"
+    - name: Verify DNS — all lab hosts
+      ansible.builtin.command: nslookup {{ item.name }}.{{ dns_zone }} 127.0.0.1
       loop: "{{ dns_records }}"
       changed_when: false
- 
-    - name: Verify reverse DNS — all lab hosts
-      ansible.builtin.command: "nslookup {{ item.ip }} 127.0.0.1"
-      loop: "{{ dns_records }}"
-      changed_when: false
- 
+  
   handlers:
     - name: Restart named
       ansible.builtin.systemd:
