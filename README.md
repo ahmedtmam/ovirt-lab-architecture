@@ -62,7 +62,7 @@ ovirt-lab-architecture/
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/<your-username>/ovirt-lab-architecture.git
+git clone https://github.com/ahmedtmam/ovirt-lab-architecture.git
 cd ovirt-lab-architecture
 ```
 
