@@ -47,10 +47,11 @@ eliminating the need for a dedicated physical management server.
 
 ---
 
-### Option A — Ansible (automated)
+## Option A — Ansible (automated)
 
 
-## Repository Structure
+
+#### Repository Structure
   
 ```
 ovirt-lab-architecture/
@@ -81,7 +82,7 @@ ovirt-lab-architecture/
         └── ovirt-engine/            # Post-engine configuration role
 ```
 
-## Quick Start
+#### Quick Start
 
 ```bash
 # 1. Clone the repository
@@ -116,7 +117,7 @@ hosted-engine --deploy
 Follow the wizard using the values in `docs/ovirt_architecture.pdf` Section 6.
 
 ---
-### Option B — Bash (manual, step by step)
+## Option B — Bash (manual, step by step)
 #### Step 1 — DNS Server (run on dns.lab.local — 192.168.5.140)
 
 ```bash
