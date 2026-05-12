@@ -75,6 +75,7 @@ ovirt-lab-architecture/
     │   ├── 02_nfs.yml               # Configure NFS server
     │   ├── 03_ovirt_hosts.yml       # Prepare oVirt nodes
     │   └── 04_site.yml              # Full site playbook (runs all)
+    └────────────────────────────────────────────────────────────────────
 ```
 
 #### Quick Start
