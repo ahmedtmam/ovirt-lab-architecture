@@ -44,6 +44,6 @@
           - "  ssh root@ovirt1.lab.local"
           - "  hosted-engine --deploy"
           - ""
-          - "See docs/ovirt_lab_architecture_v2.docx Section 6"
+          - "See docs/ovirt_architecture.pdf Section 6"
           - "for full wizard answer reference."
           - "================================================"
