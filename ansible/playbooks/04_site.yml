@@ -33,7 +33,7 @@
       ansible.builtin.command: showmount -e nfs.lab.local
       changed_when: false
       register: nfs_final
-
+  
     - name: Pre-flight PASSED
       ansible.builtin.debug:
         msg:

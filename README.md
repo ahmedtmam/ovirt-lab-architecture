@@ -57,7 +57,7 @@ eliminating the need for a dedicated physical management server.
 ovirt-lab-architecture/
 ├── README.md                        # This file
 ├── docs/
-│   └── ovirt_lab_architecture_v2.docx   # Full architecture & build guide
+│   └── ovirt_architecture.pdf       # Full architecture & build guide
 ├── configs/
 │   ├── dns/
 │   │   ├── named.conf               # BIND9 main config

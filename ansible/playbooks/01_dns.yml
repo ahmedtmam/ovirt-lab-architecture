@@ -19,7 +19,7 @@
       - { name: "ovirt2", ip: "192.168.5.143", ptr: "143" }
       - { name: "ovirt3", ip: "192.168.5.144", ptr: "144" }
       - { name: "engine", ip: "192.168.5.145", ptr: "145" }
-
+  
   tasks:
     - name: Install BIND packages
       ansible.builtin.dnf:
