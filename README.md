@@ -75,11 +75,6 @@ ovirt-lab-architecture/
     │   ├── 02_nfs.yml               # Configure NFS server
     │   ├── 03_ovirt_hosts.yml       # Prepare oVirt nodes
     │   └── 04_site.yml              # Full site playbook (runs all)
-    └── roles/
-        ├── dns/                     # BIND9 role
-        ├── nfs/                     # NFS server role
-        ├── ovirt-host/              # oVirt node preparation role
-        └── ovirt-engine/            # Post-engine configuration role
 ```
 
 #### Quick Start
