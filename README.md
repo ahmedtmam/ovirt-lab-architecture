@@ -252,7 +252,7 @@ hosted-engine --deploy
 ```
 
 > Follow the interactive wizard. Full answer reference is in
-> `docs/ovirt_lab_architecture_v2.docx` **Section 6**.
+> `docs/ovirt_architecture.pdf` **Section 6**.
 >
 > Key values:
 > | Prompt | Value |
